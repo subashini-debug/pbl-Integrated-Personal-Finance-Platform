@@ -1,0 +1,15 @@
+node_modules/
+dist/
+dist-ssr/
+__pycache__/
+*.pyc
+.env
+.env.local
+*.db
+.DS_Store
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.vite/
+*.log

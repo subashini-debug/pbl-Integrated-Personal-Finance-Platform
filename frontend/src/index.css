@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #0f1115;
+  --paper: #f7f6f2;
+  --accent: #1f6f5c;
+  --accent-light: #2e8b73;
+  --accent-dark: #14493c;
+  --gold: #c9a24b;
+  --coral: #d9694f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Inter", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: "Fraunces", serif;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--paper);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.ledger-line {
+  border-bottom: 1px solid rgba(15, 17, 21, 0.08);
+}
+
+.tick-underline {
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0% 2px;
+  transition: background-size 0.25s ease;
+}
+
+.tick-underline:hover {
+  background-size: 100% 2px;
+}

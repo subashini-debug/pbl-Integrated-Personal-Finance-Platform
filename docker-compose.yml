@@ -1,0 +1,27 @@
+version: "3.9"
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - GROK_API_KEY=${GROK_API_KEY:-}
+      - GROK_BASE_URL=${GROK_BASE_URL:-https://api.x.ai/v1}
+      - GROK_MODEL=${GROK_MODEL:-grok-4-fast}
+      - DATABASE_URL=sqlite:///./fintrack.db
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:4173
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-}
+    volumes:
+      - backend_data:/app
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "4173:4173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  backend_data:
