@@ -38,7 +38,10 @@ def _random_amount(low, high):
 
 
 def seed_if_empty(db: Session):
-    if db.query(User).filter(User.email == DEMO_EMAIL).first():
+    existing_user = db.query(User).filter(User.email == DEMO_EMAIL).first()
+    if existing_user:
+        existing_user.password_hash = hash_password(DEMO_PASSWORD)
+        db.commit()
         return
 
     user = User(
