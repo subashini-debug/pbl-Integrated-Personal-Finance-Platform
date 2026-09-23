@@ -16,6 +16,20 @@ class TransactionOut(BaseModel):
         from_attributes = True
 
 
+class TransactionCreate(BaseModel):
+    date: datetime
+    merchant: str = Field(min_length=1, max_length=200)
+    amount: float  # negative = spend, positive = income/credit
+    category: Optional[str] = None  # auto-categorized from merchant if omitted
+    is_subscription: Optional[bool] = None
+
+
+class TransactionImportSummary(BaseModel):
+    imported: int
+    skipped: int
+    errors: list[str]
+
+
 class SpendSummary(BaseModel):
     total_spend: float
     total_income: float

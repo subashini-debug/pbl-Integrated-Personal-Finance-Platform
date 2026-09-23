@@ -65,6 +65,24 @@ export const api = {
   me: () => request("/api/auth/me"),
 
   getTransactions: () => request("/api/transactions"),
+  createTransaction: (payload) =>
+    request("/api/transactions", { method: "POST", body: JSON.stringify(payload) }),
+  deleteTransaction: (id) => request(`/api/transactions/${id}`, { method: "DELETE" }),
+  importTransactions: async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const authToken = getAuthToken();
+    const res = await fetch(`${API_URL}/api/transactions/import`, {
+      method: "POST",
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+      body: formData,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new ApiError(body.detail || `Import failed (${res.status})`, res.status);
+    }
+    return res.json();
+  },
   getSummary: () => request("/api/transactions/summary"),
   getLessons: () => request("/api/lessons"),
   generateLessons: () => request("/api/lessons/generate", { method: "POST" }),
