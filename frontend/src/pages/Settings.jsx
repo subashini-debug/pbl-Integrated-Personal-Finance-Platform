@@ -47,13 +47,11 @@ export default function Settings() {
       </div>
 
       <Card>
-        <h2 className="font-display text-xl mb-2">Grok API key</h2>
+        <h2 className="font-display text-xl mb-2">AI Agent / Gemini API key</h2>
         <p className="text-sm text-ink/60 mb-5 leading-relaxed">
-          Used only to write the wording of your lessons — every number on
-          screen is computed locally and never touches an LLM. Stored in this
-          browser's local storage, sent as a request header, never written to
-          disk on the server. Leave this blank and the app still works, using
-          the built-in rules-based lesson writer.
+          Used to power the AI Chatbot Agent and lesson phrasing — every financial number
+          on screen is computed locally in Python and never altered by the LLM. Stored in this
+          browser's local storage, sent as a request header, and never written to disk on the server.
         </p>
 
         {status && (
@@ -61,9 +59,9 @@ export default function Settings() {
             <span className={`w-1.5 h-1.5 rounded-full ${status.configured ? "bg-accent" : "bg-ink/25"}`} />
             {status.configured
               ? status.using_server_default
-                ? "Using server-wide default key"
+                ? "Using server-wide default Gemini key"
                 : "Your key is active"
-              : "No Grok key configured — using rules-based lessons"}
+              : "No AI key configured — using rules-based engine"}
           </div>
         )}
 
@@ -72,7 +70,7 @@ export default function Settings() {
           type="password"
           value={key}
           onChange={(e) => setKey(e.target.value)}
-          placeholder="xai-..."
+          placeholder="AIzaSy..."
           className="w-full px-4 py-2.5 rounded-lg border border-ink/15 text-sm mb-4 focus:border-accent outline-none font-mono"
         />
 

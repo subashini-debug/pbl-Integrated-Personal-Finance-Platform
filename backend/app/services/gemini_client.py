@@ -111,3 +111,11 @@ def chat(
         if isinstance(e, GeminiUnavailable):
             raise
         raise GeminiAPIError(str(e))
+
+
+def test_key(api_key: str) -> dict:
+    try:
+        chat([{"role": "user", "content": "Hi"}], request_key=api_key, max_tokens=300)
+        return {"ok": True, "message": "Connection successful! Gemini API key is valid."}
+    except Exception as e:
+        return {"ok": False, "message": str(e)}
