@@ -119,7 +119,7 @@ export default function Agent() {
                   >
                     {m.role === "assistant" && (
                       <span className="block text-[10px] uppercase tracking-wide font-semibold text-ink/35 mb-1">
-                        {m.source === "grok" ? "Grok" : "Offline rules engine"}
+                        {m.source === "gemini" ? "Gemini AI" : m.source === "grok" ? "Grok AI" : "Offline rules engine"}
                       </span>
                     )}
                     {m.content}

@@ -79,7 +79,7 @@ export default function Learn() {
                     {meta.label}
                   </span>
                   <span className="text-[10px] uppercase tracking-wide text-ink/30 font-semibold">
-                    {l.source === "grok" ? "AI-narrated" : "Rules-based"}
+                    {l.source === "gemini" || l.source === "grok" ? "AI-narrated" : "Rules-based"}
                   </span>
                 </div>
                 <h3 className="font-display text-lg leading-snug">{l.title}</h3>
