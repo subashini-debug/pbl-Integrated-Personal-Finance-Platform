@@ -8,7 +8,7 @@ cannot invent numbers that disagree with what's on screen. If Grok isn't
 configured or the call fails, a deterministic rules-based template is used
 instead so the product works fully offline.
 """
-from . import grok_client
+from . import grok_client, gemini_client
 from .investment_engine import opportunity_cost
 
 RULES_TEMPLATES = {
@@ -84,12 +84,15 @@ def _grok_lesson(trigger: dict, opp_cost: float | None, request_key: str | None)
         "Respond in exactly two lines: line 1 is a short punchy title (max 8 words), "
         "line 2 is a 2-3 sentence lesson body, encouraging but direct, no fluff, no emoji."
     )
+    messages = [
+        {"role": "system", "content": "You write short, factual, encouraging financial micro-lessons."},
+        {"role": "user", "content": prompt},
+    ]
     try:
-        reply = grok_client.chat(
-            [{"role": "system", "content": "You write short, factual, encouraging financial micro-lessons."},
-             {"role": "user", "content": prompt}],
-            request_key=request_key,
-        )
+        if gemini_client.is_configured(request_key):
+            reply = gemini_client.chat(messages, request_key=request_key)
+        else:
+            reply = grok_client.chat(messages, request_key=request_key)
         lines = [l.strip() for l in reply.split("\n") if l.strip()]
         if len(lines) >= 2:
             return {"title": lines[0].lstrip("#").strip(), "body": " ".join(lines[1:])}
@@ -104,7 +107,10 @@ def generate_lesson(trigger: dict, request_key: str | None = None) -> dict:
         amt = abs(trigger.get("amount") or trigger.get("total_amount") or 0)
         opp_cost = opportunity_cost(amt)
 
-    if grok_client.is_configured(request_key):
+    if gemini_client.is_configured(request_key):
+        content = _grok_lesson(trigger, opp_cost, request_key)
+        source = "gemini"
+    elif grok_client.is_configured(request_key):
         content = _grok_lesson(trigger, opp_cost, request_key)
         source = "grok"
     else:

@@ -21,7 +21,7 @@ import re
 from collections import defaultdict
 from typing import List
 
-from . import grok_client
+from . import grok_client, gemini_client
 from .investment_engine import infer_risk_profile
 from ..models import Transaction, User
 
@@ -173,13 +173,21 @@ def reply(
     """
     facts = _build_facts(db_transactions, user)
 
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT + "\n\n" + _facts_to_prompt_block(facts)},
+        *history,
+        {"role": "user", "content": message},
+    ]
+
+    if gemini_client.is_configured(request_key):
+        try:
+            text = gemini_client.chat(messages, request_key=request_key, max_tokens=350, temperature=0.5)
+            return {"reply": text, "source": "gemini", "context_used": facts}
+        except Exception:
+            pass  # fall through
+
     if grok_client.is_configured(request_key):
         try:
-            messages = [
-                {"role": "system", "content": SYSTEM_PROMPT + "\n\n" + _facts_to_prompt_block(facts)},
-                *history,
-                {"role": "user", "content": message},
-            ]
             text = grok_client.chat(messages, request_key=request_key, max_tokens=350, temperature=0.5)
             return {"reply": text, "source": "grok", "context_used": facts}
         except Exception:
