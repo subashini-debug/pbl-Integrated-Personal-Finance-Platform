@@ -21,23 +21,20 @@ class GeminiAPIError(GeminiUnavailable):
         self.status_code = status_code
 
 
-DEFAULT_GEMINI_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GROK_API_KEY") or ""
-
-
 def _config(name: str, default: str = "") -> str:
     return os.getenv(name, default).strip()
 
 
 def _resolve_key(request_key: str | None = None) -> str | None:
     key = (request_key or "").strip()
-    if key and not key.startswith("xai-") and len(key) > 10:
+    if key and (key.startswith("AQ") or key.startswith("AIza") or len(key) > 20) and not key.startswith("xai-"):
         return key
-    return _config("GEMINI_API_KEY") or DEFAULT_GEMINI_KEY
+    return os.getenv("GEMINI_API_KEY", "").strip() or os.getenv("GROK_API_KEY", "").strip()
 
 
 def get_config() -> dict:
     return {
-        "model": _config("GEMINI_MODEL", "gemini-3.6-flash"),
+        "model": _config("GEMINI_MODEL", "gemini-3.5-flash-lite"),
         "server_key_configured": bool(_resolve_key()),
     }
 
@@ -57,8 +54,8 @@ def chat(
     if not key:
         raise GeminiUnavailable("No Gemini API key configured.")
 
-    model = get_config()["model"]
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+    models_to_try = [get_config()["model"], "gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-3.5-flash"]
+    last_error = None
 
     system_instruction = ""
     contents = []
@@ -89,28 +86,24 @@ def chat(
             "parts": [{"text": system_instruction.strip()}]
         }
 
-    try:
-        resp = requests.post(url, json=payload, timeout=20)
-        if resp.status_code != 200:
-            raise GeminiAPIError(f"Gemini API returned status {resp.status_code}: {resp.text}", resp.status_code)
-        
-        data = resp.json()
-        candidates = data.get("candidates", [])
-        if not candidates:
-            raise GeminiAPIError("Gemini returned no candidates.")
-        
-        parts = candidates[0].get("content", {}).get("parts", [])
-        text_parts = [p.get("text", "").strip() for p in parts if p.get("text")]
-        result_text = "\n".join(text_parts).strip()
-        
-        if not result_text:
-            raise GeminiAPIError("Gemini returned an empty response.")
-        
-        return result_text
-    except Exception as e:
-        if isinstance(e, GeminiUnavailable):
-            raise
-        raise GeminiAPIError(str(e))
+    for model in dict.fromkeys(models_to_try):
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+        try:
+            resp = requests.post(url, json=payload, timeout=20)
+            if resp.status_code == 200:
+                data = resp.json()
+                candidates = data.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    text_parts = [p.get("text", "").strip() for p in parts if p.get("text")]
+                    result_text = "\n".join(text_parts).strip()
+                    if result_text:
+                        return result_text
+            last_error = f"Gemini API ({model}) status {resp.status_code}: {resp.text}"
+        except Exception as e:
+            last_error = str(e)
+
+    raise GeminiAPIError(last_error or "Gemini API unavailable")
 
 
 def test_key(api_key: str) -> dict:
