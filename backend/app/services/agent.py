@@ -154,8 +154,7 @@ def _fallback_reply(message: str, facts: dict) -> str:
         f"Here's a quick snapshot: ₹{facts['total_income_period']:,.0f} in, "
         f"₹{facts['total_spend_period']:,.0f} out, net ₹{facts['net_period']:,.0f} over the period on "
         f"record. Ask me about spending, subscriptions, savings, or your investment allocation and "
-        f"I'll dig into the specific numbers. (Connect a Grok API key in Settings for richer, "
-        f"free-form answers -- right now I'm using the offline rules engine.)"
+        f"I'll dig into the specific numbers."
     )
 
 
@@ -167,7 +166,7 @@ def reply(
     request_key: str | None = None,
 ) -> dict:
     """
-    Returns {"reply": str, "source": "grok"|"rules", "context_used": dict}.
+    Returns {"reply": str, "source": "gemini"|"grok"|"rules", "context_used": dict}.
     `history` is a list of {"role": "user"|"assistant", "content": str}
     already trimmed to a reasonable window by the caller.
     """
@@ -183,14 +182,14 @@ def reply(
         try:
             text = gemini_client.chat(messages, request_key=request_key, max_tokens=1500, temperature=0.5)
             return {"reply": text, "source": "gemini", "context_used": facts}
-        except Exception:
-            pass  # fall through
+        except Exception as err:
+            print(f"[agent] Gemini chat failed: {err}")
 
     if grok_client.is_configured(request_key):
         try:
             text = grok_client.chat(messages, request_key=request_key, max_tokens=1500, temperature=0.5)
             return {"reply": text, "source": "grok", "context_used": facts}
-        except Exception:
-            pass  # fall through to rules engine
+        except Exception as err:
+            print(f"[agent] Grok chat failed: {err}")
 
     return {"reply": _fallback_reply(message, facts), "source": "rules", "context_used": facts}

@@ -21,7 +21,7 @@ class GeminiAPIError(GeminiUnavailable):
         self.status_code = status_code
 
 
-DEFAULT_GEMINI_KEY = "AIzaSyD0hBz5Uvr_XBRn5s4w1B7fkTk-MeRjsDY"
+DEFAULT_GEMINI_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GROK_API_KEY") or ""
 
 
 def _config(name: str, default: str = "") -> str:
@@ -30,7 +30,7 @@ def _config(name: str, default: str = "") -> str:
 
 def _resolve_key(request_key: str | None = None) -> str | None:
     key = (request_key or "").strip()
-    if key:
+    if key and not key.startswith("xai-") and len(key) > 10:
         return key
     return _config("GEMINI_API_KEY") or DEFAULT_GEMINI_KEY
 
