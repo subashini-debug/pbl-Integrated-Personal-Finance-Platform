@@ -71,7 +71,8 @@ def _fallback_lesson(trigger: dict) -> dict:
     return {"title": title, "body": body}
 
 
-def _grok_lesson(trigger: dict, opp_cost: float | None, request_key: str | None) -> dict:
+def _llm_lesson(trigger: dict, opp_cost: float | None, grok_key: str | None,
+                 gemini_key: str | None) -> tuple[dict, str]:
     fallback = _fallback_lesson(trigger)
     facts_summary = ", ".join(f"{k}={v}" for k, v in trigger.items() if k not in ("date",))
     opp_line = f" The opportunity cost, if invested for 10 years at ~12% annual return, is ₹{opp_cost:,.0f}." if opp_cost else ""
@@ -88,34 +89,32 @@ def _grok_lesson(trigger: dict, opp_cost: float | None, request_key: str | None)
         {"role": "system", "content": "You write short, factual, encouraging financial micro-lessons."},
         {"role": "user", "content": prompt},
     ]
-    try:
-        if gemini_client.is_configured(request_key):
-            reply = gemini_client.chat(messages, request_key=request_key)
-        else:
-            reply = grok_client.chat(messages, request_key=request_key)
-        lines = [l.strip() for l in reply.split("\n") if l.strip()]
-        if len(lines) >= 2:
-            return {"title": lines[0].lstrip("#").strip(), "body": " ".join(lines[1:])}
-        return {"title": fallback["title"], "body": reply}
-    except Exception:
-        return fallback
+
+    for is_cfg, do_chat, key, name in (
+        (gemini_client.is_configured, gemini_client.chat, gemini_key, "gemini"),
+        (grok_client.is_configured, grok_client.chat, grok_key, "grok"),
+    ):
+        if not is_cfg(key):
+            continue
+        try:
+            reply = do_chat(messages, request_key=key)
+            lines = [l.strip() for l in reply.split("\n") if l.strip()]
+            if len(lines) >= 2:
+                return {"title": lines[0].lstrip("#").strip(), "body": " ".join(lines[1:])}, name
+            return {"title": fallback["title"], "body": reply}, name
+        except Exception:
+            continue  # try the next provider, then fall back to rules
+
+    return fallback, "rules"
 
 
-def generate_lesson(trigger: dict, request_key: str | None = None) -> dict:
+def generate_lesson(trigger: dict, grok_key: str | None = None, gemini_key: str | None = None) -> dict:
     opp_cost = None
     if trigger["trigger_type"] in ("large_discretionary_spend", "impulse_repeat_spend"):
         amt = abs(trigger.get("amount") or trigger.get("total_amount") or 0)
         opp_cost = opportunity_cost(amt)
 
-    if gemini_client.is_configured(request_key):
-        content = _grok_lesson(trigger, opp_cost, request_key)
-        source = "gemini"
-    elif grok_client.is_configured(request_key):
-        content = _grok_lesson(trigger, opp_cost, request_key)
-        source = "grok"
-    else:
-        content = _fallback_lesson(trigger)
-        source = "rules"
+    content, source = _llm_lesson(trigger, opp_cost, grok_key, gemini_key)
 
     return {
         "trigger_type": trigger["trigger_type"],

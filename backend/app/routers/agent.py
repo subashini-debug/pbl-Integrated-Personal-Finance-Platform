@@ -33,6 +33,7 @@ def chat(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     x_grok_key: str | None = Header(default=None, alias="X-Grok-Key"),
+    x_gemini_key: str | None = Header(default=None, alias="X-Gemini-Key"),
 ):
     prior = (
         db.query(AgentMessage)
@@ -50,7 +51,8 @@ def chat(
         history=history,
         db_transactions=txns,
         user=current_user,
-        request_key=x_grok_key,
+        grok_key=x_grok_key,
+        gemini_key=x_gemini_key,
     )
 
     db.add(AgentMessage(user_id=current_user.id, role="user", content=payload.message, source="user"))

@@ -7,12 +7,13 @@ and investment_engine.py). Before every reply, the agent:
 
 1. Pulls the user's real transactions, spend summary, and investment profile
    from the database and reduces them to a compact "facts" block.
-2. Sends those facts + the recent conversation history to Grok as a system
-   prompt, explicitly instructing it to reason ONLY over the given numbers
-   and never invent figures.
-3. Falls back to a deterministic, rules-based responder if no Grok key is
-   configured or the API call fails, so the agent still answers sensibly
-   with zero network dependency (judges' wifi problem, again).
+2. Sends those facts + the recent conversation history to Gemini (preferred)
+   or Grok as a system prompt, explicitly instructing it to reason ONLY
+   over the given numbers and never invent figures.
+3. Falls back to a deterministic, rules-based responder if neither provider
+   is configured or every configured call fails, so the agent still
+   answers sensibly with zero network dependency (judges' wifi problem,
+   again).
 
 The agent is intentionally scoped to personal-finance coaching grounded in
 *this user's own data* -- it is not a general-purpose chatbot.
@@ -154,8 +155,32 @@ def _fallback_reply(message: str, facts: dict) -> str:
         f"Here's a quick snapshot: ₹{facts['total_income_period']:,.0f} in, "
         f"₹{facts['total_spend_period']:,.0f} out, net ₹{facts['net_period']:,.0f} over the period on "
         f"record. Ask me about spending, subscriptions, savings, or your investment allocation and "
-        f"I'll dig into the specific numbers."
+        f"I'll dig into the specific numbers. (Connect a Gemini or Grok API key in Settings for "
+        f"richer, free-form answers -- right now I'm using the offline rules engine.)"
     )
+
+
+def _try_llm(messages: list, grok_key: str | None, gemini_key: str | None,
+             max_tokens: int, temperature: float) -> tuple[str | None, str | None]:
+    """
+    Try each configured provider in turn and return (text, source_name) for
+    the first one that succeeds, or (None, None) if every configured
+    provider is either unset or failed. Gemini goes first since it's the
+    provider most recently wired up here; swap the order (or make it an
+    env-driven priority list) if that preference ever needs to change.
+    """
+    for is_cfg, do_chat, key, name in (
+        (gemini_client.is_configured, gemini_client.chat, gemini_key, "gemini"),
+        (grok_client.is_configured, grok_client.chat, grok_key, "grok"),
+    ):
+        if not is_cfg(key):
+            continue
+        try:
+            text = do_chat(messages, request_key=key, max_tokens=max_tokens, temperature=temperature)
+            return text, name
+        except Exception:
+            continue  # fall through to the next provider, then to rules
+    return None, None
 
 
 def reply(
@@ -163,7 +188,8 @@ def reply(
     history: List[dict],
     db_transactions: List[Transaction],
     user: User,
-    request_key: str | None = None,
+    grok_key: str | None = None,
+    gemini_key: str | None = None,
 ) -> dict:
     """
     Returns {"reply": str, "source": "gemini"|"grok"|"rules", "context_used": dict}.
@@ -171,25 +197,14 @@ def reply(
     already trimmed to a reasonable window by the caller.
     """
     facts = _build_facts(db_transactions, user)
-
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT + "\n\n" + _facts_to_prompt_block(facts)},
         *history,
         {"role": "user", "content": message},
     ]
 
-    if gemini_client.is_configured(request_key):
-        try:
-            text = gemini_client.chat(messages, request_key=request_key, max_tokens=1500, temperature=0.5)
-            return {"reply": text, "source": "gemini", "context_used": facts}
-        except Exception as err:
-            print(f"[agent] Gemini chat failed: {err}")
-
-    if grok_client.is_configured(request_key):
-        try:
-            text = grok_client.chat(messages, request_key=request_key, max_tokens=1500, temperature=0.5)
-            return {"reply": text, "source": "grok", "context_used": facts}
-        except Exception as err:
-            print(f"[agent] Grok chat failed: {err}")
+    text, source = _try_llm(messages, grok_key, gemini_key, max_tokens=350, temperature=0.5)
+    if text:
+        return {"reply": text, "source": source, "context_used": facts}
 
     return {"reply": _fallback_reply(message, facts), "source": "rules", "context_used": facts}

@@ -16,20 +16,6 @@ class TransactionOut(BaseModel):
         from_attributes = True
 
 
-class TransactionCreate(BaseModel):
-    date: datetime
-    merchant: str = Field(min_length=1, max_length=200)
-    amount: float  # negative = spend, positive = income/credit
-    category: Optional[str] = None  # auto-categorized from merchant if omitted
-    is_subscription: Optional[bool] = None
-
-
-class TransactionImportSummary(BaseModel):
-    imported: int
-    skipped: int
-    errors: list[str]
-
-
 class SpendSummary(BaseModel):
     total_spend: float
     total_income: float
@@ -100,6 +86,10 @@ class GrokKeyTest(BaseModel):
     api_key: str
 
 
+class GeminiKeyTest(BaseModel):
+    api_key: str
+
+
 class SignupRequest(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     email: EmailStr
@@ -145,5 +135,5 @@ class AgentChatRequest(BaseModel):
 
 class AgentChatResponse(BaseModel):
     reply: str
-    source: str  # "grok" or "rules"
+    source: str  # "gemini", "grok", or "rules"
     context_used: dict

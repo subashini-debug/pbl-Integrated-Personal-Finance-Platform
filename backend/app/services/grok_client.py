@@ -14,17 +14,17 @@ import requests
 
 GROK_BASE_URL = os.getenv("GROK_BASE_URL", "https://api.x.ai/v1")
 GROK_MODEL = os.getenv("GROK_MODEL", "grok-4-fast")
-# Empty string, not a placeholder -- an unset key must be falsy.
-SERVER_DEFAULT_KEY = os.getenv("GROK_API_KEY", "")
+# Insert your Grok / xAI API key below (or set GROK_API_KEY in backend/.env)
+SERVER_DEFAULT_KEY = os.getenv("GROK_API_KEY", "YOUR_GROK_API_KEY_HERE")
 
-_PLACEHOLDER_VALUES = {"", "your_grok_api_key_here", "your_gemini_api_key_here", "changeme"}
+
+
+class GrokUnavailable(Exception):
+    pass
 
 
 def _resolve_key(request_key: str | None) -> str | None:
-    for candidate in (request_key, SERVER_DEFAULT_KEY):
-        if candidate and candidate.strip().lower() not in _PLACEHOLDER_VALUES:
-            return candidate.strip()
-    return None
+    return request_key or SERVER_DEFAULT_KEY or None
 
 
 def is_configured(request_key: str | None = None) -> bool:

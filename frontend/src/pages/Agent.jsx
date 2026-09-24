@@ -88,7 +88,7 @@ export default function Agent() {
           <h1 className="font-display text-3xl">AI Agent</h1>
           <p className="text-ink/60 mt-1 max-w-lg">
             Every answer below is built from your actual transactions and investment
-            profile, narrated by Grok when a key is configured -- or by an offline
+            profile, narrated by Gemini or Grok when a key is configured -- or by an offline
             rules engine that still reasons over the same numbers.
           </p>
         </div>
@@ -119,7 +119,7 @@ export default function Agent() {
                   >
                     {m.role === "assistant" && (
                       <span className="block text-[10px] uppercase tracking-wide font-semibold text-ink/35 mb-1">
-                        {m.source === "gemini" ? "Gemini AI" : m.source === "grok" ? "Grok AI" : "Offline rules engine"}
+                        {m.source === "gemini" ? "Gemini" : m.source === "grok" ? "Grok" : "Offline rules engine"}
                       </span>
                     )}
                     {m.content}

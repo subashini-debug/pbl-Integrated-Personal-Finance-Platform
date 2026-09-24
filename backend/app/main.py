@@ -1,5 +1,9 @@
 from dotenv import load_dotenv
-load_dotenv()  # must run before importing anything below that reads os.getenv() at import time
+load_dotenv()  # must run before any of the imports below -- several of them
+                # read os.getenv(...) at module import time (gemini_client,
+                # grok_client, auth, database), so .env has to be loaded into
+                # the process environment before those modules are imported,
+                # or their env vars will silently read as unset.
 
 import os
 from fastapi import FastAPI
@@ -11,7 +15,6 @@ from .database import Base, engine, SessionLocal
 from . import models  # noqa: F401  (ensures models are registered on Base)
 from .seed_data import seed_if_empty
 from .routers import transactions, lessons, investments, settings as settings_router, auth as auth_router, agent as agent_router
-from .services import gemini_client, grok_client
 
 app = FastAPI(
     title="FinTrack API",
@@ -39,11 +42,6 @@ def on_startup():
         seed_if_empty(db)
     finally:
         db.close()
-
-    if gemini_client.is_configured() or grok_client.is_configured():
-        print("[ai] AI service configured and active.")
-    else:
-        print("[ai] No API key configured -- agent and lesson generation will use the rules-based fallback.")
 
 
 app.include_router(auth_router.router)

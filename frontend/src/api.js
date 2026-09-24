@@ -1,5 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const GROK_KEY_STORAGE = "fintrack_grok_key";
+const GEMINI_KEY_STORAGE = "fintrack_gemini_key";
 const AUTH_TOKEN_STORAGE = "fintrack_auth_token";
 
 export function getStoredGrokKey() {
@@ -9,6 +10,15 @@ export function getStoredGrokKey() {
 export function setStoredGrokKey(key) {
   if (key) localStorage.setItem(GROK_KEY_STORAGE, key);
   else localStorage.removeItem(GROK_KEY_STORAGE);
+}
+
+export function getStoredGeminiKey() {
+  return localStorage.getItem(GEMINI_KEY_STORAGE) || "";
+}
+
+export function setStoredGeminiKey(key) {
+  if (key) localStorage.setItem(GEMINI_KEY_STORAGE, key);
+  else localStorage.removeItem(GEMINI_KEY_STORAGE);
 }
 
 export function getAuthToken() {
@@ -29,10 +39,12 @@ class ApiError extends Error {
 
 async function request(path, options = {}) {
   const grokKey = getStoredGrokKey();
+  const geminiKey = getStoredGeminiKey();
   const authToken = getAuthToken();
   const headers = {
     "Content-Type": "application/json",
     ...(grokKey ? { "X-Grok-Key": grokKey } : {}),
+    ...(geminiKey ? { "X-Gemini-Key": geminiKey } : {}),
     ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
     ...(options.headers || {}),
   };
@@ -65,24 +77,6 @@ export const api = {
   me: () => request("/api/auth/me"),
 
   getTransactions: () => request("/api/transactions"),
-  createTransaction: (payload) =>
-    request("/api/transactions", { method: "POST", body: JSON.stringify(payload) }),
-  deleteTransaction: (id) => request(`/api/transactions/${id}`, { method: "DELETE" }),
-  importTransactions: async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    const authToken = getAuthToken();
-    const res = await fetch(`${API_URL}/api/transactions/import`, {
-      method: "POST",
-      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-      body: formData,
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new ApiError(body.detail || `Import failed (${res.status})`, res.status);
-    }
-    return res.json();
-  },
   getSummary: () => request("/api/transactions/summary"),
   getLessons: () => request("/api/lessons"),
   generateLessons: () => request("/api/lessons/generate", { method: "POST" }),
@@ -104,6 +98,13 @@ export const api = {
   grokStatus: () => request("/api/settings/grok-status"),
   testGrokKey: (apiKey) =>
     request("/api/settings/test-grok-key", {
+      method: "POST",
+      body: JSON.stringify({ api_key: apiKey }),
+    }),
+
+  geminiStatus: () => request("/api/settings/gemini-status"),
+  testGeminiKey: (apiKey) =>
+    request("/api/settings/test-gemini-key", {
       method: "POST",
       body: JSON.stringify({ api_key: apiKey }),
     }),

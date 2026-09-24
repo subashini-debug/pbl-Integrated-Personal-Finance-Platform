@@ -29,6 +29,7 @@ def generate_lessons(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     x_grok_key: str | None = Header(default=None, alias="X-Grok-Key"),
+    x_gemini_key: str | None = Header(default=None, alias="X-Gemini-Key"),
 ):
     """
     Re-scans all of the current user's transactions for behavioral triggers
@@ -47,7 +48,7 @@ def generate_lessons(
         key = (trigger["trigger_type"], trigger.get("transaction_id"))
         if key in existing:
             continue
-        content = generate_lesson(trigger, request_key=x_grok_key)
+        content = generate_lesson(trigger, grok_key=x_grok_key, gemini_key=x_gemini_key)
         lesson = Lesson(
             user_id=current_user.id,
             trigger_type=content["trigger_type"],
