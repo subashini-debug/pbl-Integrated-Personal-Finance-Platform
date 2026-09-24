@@ -49,7 +49,7 @@ def is_configured(request_key: str | None = None) -> bool:
 def chat(
     messages: list,
     request_key: str | None = None,
-    max_tokens: int = 700,
+    max_tokens: int = 1500,
     temperature: float = 0.5,
 ) -> str:
     """Send FinTrack conversation context to Gemini via REST API."""

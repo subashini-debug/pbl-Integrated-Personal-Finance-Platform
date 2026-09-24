@@ -181,14 +181,14 @@ def reply(
 
     if gemini_client.is_configured(request_key):
         try:
-            text = gemini_client.chat(messages, request_key=request_key, max_tokens=350, temperature=0.5)
+            text = gemini_client.chat(messages, request_key=request_key, max_tokens=1500, temperature=0.5)
             return {"reply": text, "source": "gemini", "context_used": facts}
         except Exception:
             pass  # fall through
 
     if grok_client.is_configured(request_key):
         try:
-            text = grok_client.chat(messages, request_key=request_key, max_tokens=350, temperature=0.5)
+            text = grok_client.chat(messages, request_key=request_key, max_tokens=1500, temperature=0.5)
             return {"reply": text, "source": "grok", "context_used": facts}
         except Exception:
             pass  # fall through to rules engine
