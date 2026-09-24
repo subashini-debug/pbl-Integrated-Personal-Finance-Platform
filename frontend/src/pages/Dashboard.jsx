@@ -15,12 +15,17 @@ import { Card, Eyebrow, Loading, ErrorBanner, formatINR } from "../components/UI
 import Scene from "../three/Scene.jsx";
 import GrowthSculpture from "../three/GrowthSculpture.jsx";
 
+import { useAuth } from "../context/AuthContext.jsx";
+
 const PALETTE = ["#1F6F5C", "#2E8B73", "#C9A24B", "#D9694F", "#7C9885", "#9A6B4F", "#4A6670", "#B5883E"];
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const firstName = user?.name ? user.name.split(" ")[0] : "Suba";
 
   const load = () => {
     setLoading(true);
@@ -56,7 +61,7 @@ export default function Dashboard() {
     <div className="space-y-8">
       <div>
         <Eyebrow>Last 90 days</Eyebrow>
-        <h1 className="font-display text-3xl">Good to see you, Aditi.</h1>
+        <h1 className="font-display text-3xl">Good to see you, {firstName}.</h1>
         <p className="text-ink/60 mt-1">
           Here's what your money has been doing — and where the loop kicks in.
         </p>

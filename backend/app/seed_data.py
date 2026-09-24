@@ -42,7 +42,7 @@ def seed_if_empty(db: Session):
         return
 
     user = User(
-        name="Aditi Rao",
+        name="Suba Rao",
         email=DEMO_EMAIL,
         password_hash=hash_password(DEMO_PASSWORD),
         monthly_income=85000.0,
