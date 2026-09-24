@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+if git diff --cached --name-only | grep -E '^backend/\.env$|^frontend/\.env(\.local)?$'; then
+  echo "Refusing to commit a real .env file. Did you mean .env.example?"
+  exit 1
+fi

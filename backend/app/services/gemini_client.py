@@ -21,15 +21,21 @@ class GeminiAPIError(GeminiUnavailable):
         self.status_code = status_code
 
 
+_PLACEHOLDER_VALUES = {"", "your_grok_api_key_here", "your_gemini_api_key_here", "changeme"}
+
+
 def _config(name: str, default: str = "") -> str:
     return os.getenv(name, default).strip()
 
 
 def _resolve_key(request_key: str | None = None) -> str | None:
-    key = (request_key or "").strip()
-    if key and (key.startswith("AQ") or key.startswith("AIza") or len(key) > 20) and not key.startswith("xai-"):
-        return key
-    return os.getenv("GEMINI_API_KEY", "").strip() or os.getenv("GROK_API_KEY", "").strip()
+    server_key = os.getenv("GEMINI_API_KEY", "").strip() or os.getenv("GROK_API_KEY", "").strip()
+    for candidate in (request_key, server_key):
+        if candidate:
+            cand = candidate.strip()
+            if cand.lower() not in _PLACEHOLDER_VALUES and not cand.startswith("xai-"):
+                return cand
+    return None
 
 
 def get_config() -> dict:
