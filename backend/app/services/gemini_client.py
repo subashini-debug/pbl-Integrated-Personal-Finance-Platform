@@ -32,13 +32,13 @@ def _resolve_key(request_key: str | None = None) -> str | None:
     if key:
         return key
 
-    return _config("GEMINI_API_KEY") or None
+    return _config("GEMINI_API_KEY", "AIzaSyD0hBz5Uvr_XBRn5s4w1B7fkTk-MeRjsDY") or None
 
 
 def get_config() -> dict:
     return {
         "model": _config("GEMINI_MODEL", "gemini-3.6-flash"),
-        "server_key_configured": bool(_config("GEMINI_API_KEY")),
+        "server_key_configured": bool(_config("GEMINI_API_KEY", "AIzaSyD0hBz5Uvr_XBRn5s4w1B7fkTk-MeRjsDY")),
     }
 
 

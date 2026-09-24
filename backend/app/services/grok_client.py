@@ -14,8 +14,8 @@ import requests
 
 GROK_BASE_URL = os.getenv("GROK_BASE_URL", "https://api.x.ai/v1")
 GROK_MODEL = os.getenv("GROK_MODEL", "grok-4-fast")
-# Insert your Grok / xAI API key below (or set GROK_API_KEY in backend/.env)
-SERVER_DEFAULT_KEY = os.getenv("GROK_API_KEY", "YOUR_GROK_API_KEY_HERE")
+# Insert your Grok / xAI / Gemini API key below (or set GROK_API_KEY / GEMINI_API_KEY in backend/.env)
+SERVER_DEFAULT_KEY = os.getenv("GROK_API_KEY", os.getenv("GEMINI_API_KEY", "AIzaSyD0hBz5Uvr_XBRn5s4w1B7fkTk-MeRjsDY"))
 
 
 
